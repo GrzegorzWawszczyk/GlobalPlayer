@@ -13,7 +13,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(const QString startFilePath = QString(), QWidget *parent = 0);
     ~MainWindow();
 
     void keyPressEvent(QKeyEvent *event) override;
@@ -22,11 +22,16 @@ public:
     void skipBackward();
     void skipForward();
 
+private slots:
+    void showOrHidePlaylist();
 
 private:
     Ui::MainWindow *ui;
 
     QMediaPlayer *player;
+
+    void hidePlaylist();
+    void showPlaylist();
 
 //    void focusInEvent(QFocusEvent *event) override;
 

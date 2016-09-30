@@ -14,9 +14,12 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    videoplayer.cpp
+    videoplayer.cpp \
+    playlistmodel.cpp
 
 HEADERS  += mainwindow.h \
-    videoplayer.h
+    videoplayer.h \
+    playlistmodel.h
 
-FORMS    += mainwindow.ui
+FORMS    += \
+    mainwindow.ui
