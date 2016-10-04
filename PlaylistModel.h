@@ -9,6 +9,9 @@
 
 class PlaylistModel : public QAbstractListModel
 {
+
+    Q_OBJECT
+
 public:
     PlaylistModel(QObject *parent = 0);
 
@@ -17,7 +20,7 @@ public:
 
     QMediaPlaylist *playlist();
 
-    void addToPlaylist(QFileInfoList files);
+    void addToPlaylist(const QStringList &files);
 
     QMediaContent getFile(const QModelIndex &index);
 
@@ -25,10 +28,19 @@ public:
 
     void setByIndex(const QModelIndex& index);
 
+    void clearPlaylist();
+
+    void moveUp(int index);
+    void moveDown(int index);
+
 public slots:
 
     void previous();
     void next();
+
+signals:
+    void moved(int index);
+    void currentMoved();
 
 private:
     QMediaPlaylist files;

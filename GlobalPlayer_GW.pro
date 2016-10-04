@@ -13,13 +13,20 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    videoplayer.cpp \
-    playlistmodel.cpp
+    KeyObserver.cpp \
+    Application.cpp \
+    MainWindow.cpp \
+    PlaylistModel.cpp \
+    PlaylistView.cpp \
+    VideoPlayer.cpp
 
-HEADERS  += mainwindow.h \
-    videoplayer.h \
-    playlistmodel.h
+HEADERS  += \
+    KeyObserver.h \
+    Application.h \
+    MainWindow.h \
+    PlaylistModel.h \
+    PlaylistView.h \
+    VideoPlayer.h
 
 FORMS    += \
     mainwindow.ui

@@ -13,11 +13,11 @@ public:
     VideoPlayer(QWidget* parent = 0);
 
     void changeDisplayMode();
+    void exitFullScreen();
 
     void playOrPause();
 
 private:
-    void keyPressEvent(QKeyEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 

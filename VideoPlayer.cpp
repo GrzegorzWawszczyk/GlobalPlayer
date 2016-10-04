@@ -1,12 +1,14 @@
-#include "mainwindow.h"
-#include "videoplayer.h"
+#include "MainWindow.h"
+#include "VideoPlayer.h"
 
 #include <QDebug>
 #include <QKeyEvent>
 
 VideoPlayer::VideoPlayer(QWidget *parent) : QVideoWidget(parent)
 {
-
+    QPalette p = palette();
+    p.setColor(QPalette::Window, Qt::black);
+    setPalette(p);
 }
 
 void VideoPlayer::changeDisplayMode()
@@ -17,9 +19,9 @@ void VideoPlayer::changeDisplayMode()
         setFullScreen(true);
 }
 
-void VideoPlayer::keyPressEvent(QKeyEvent *event)
+void VideoPlayer::exitFullScreen()
 {
-    dynamic_cast<MainWindow*>( this->parent()->parent())->keyPressEvent(event);
+    setFullScreen(false);
 }
 
 void VideoPlayer::closeEvent(QCloseEvent *event)

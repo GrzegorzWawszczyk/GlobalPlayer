@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QMediaPlayer>
+#include <QTime>
 
 namespace Ui {
 class MainWindow;
@@ -16,24 +17,35 @@ public:
     explicit MainWindow(const QString startFilePath = QString(), QWidget *parent = 0);
     ~MainWindow();
 
-    void keyPressEvent(QKeyEvent *event) override;
     void playOrPause();
-
     void skipBackward();
     void skipForward();
+    void seekBackward();
+    void seekForward();
+    void muteOrUnmute();
+
 
 private slots:
     void showOrHidePlaylist();
+
+    void moveUp();
+    void moveDown();
+
+    void hidePlaylist();
+    void showPlaylist();
 
 private:
     Ui::MainWindow *ui;
 
     QMediaPlayer *player;
 
-    void hidePlaylist();
-    void showPlaylist();
+    QTime fullTime;
 
-//    void focusInEvent(QFocusEvent *event) override;
+    qint64 currentPosition;
+
+    QTime msecsToQTime(int msecs);
+
+    bool blockHiding = false;
 
 };
 
