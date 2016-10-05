@@ -33,6 +33,8 @@ public:
     void moveUp(int index);
     void moveDown(int index);
 
+    int mediaCount();
+
 public slots:
 
     void previous();

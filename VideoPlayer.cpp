@@ -11,7 +11,7 @@ VideoPlayer::VideoPlayer(QWidget *parent) : QVideoWidget(parent)
     setPalette(p);
 }
 
-void VideoPlayer::changeDisplayMode()
+void VideoPlayer::switchFullScreen()
 {
     if (isFullScreen())
         setFullScreen(false);
@@ -32,5 +32,5 @@ void VideoPlayer::closeEvent(QCloseEvent *event)
 
 void VideoPlayer::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    changeDisplayMode();
+    switchFullScreen();
 }

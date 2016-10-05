@@ -14,7 +14,7 @@
    <enum>Qt::StrongFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>GlobalPlayer</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">

@@ -11,16 +11,18 @@
 #include <QKeyEvent>
 #include <QFileDialog>
 #include <QtConcurrent/QtConcurrent>
+#include <functional>
 
 
 MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    player(new QMediaPlayer)
 {
 
     ui->setupUi(this);
 
-    QPixmap p("C:/projects/nuta.jpg");
+    QPixmap p("nuta.jpg");
     ui->l_musicPicture->setScaledContents(true);
     ui->l_musicPicture->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     ui->l_musicPicture->setPixmap(p);
@@ -31,12 +33,12 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
 
 
 //    for testing purposes
-    QStringList fil;
-    fil.append("C:/projects/person-placeholder.jpg");
-    fil.append("C:/projects/fighting_cats4.wmv");
-    fil.append("C:/projects/swk.wmv");
-    fil.append("C:/projects/Daft Punk - Derezzed.mp3");
-    playlistModel->addToPlaylist(fil);
+//    QStringList fil;
+//    fil.append("C:/projects/person-placeholder.jpg");
+//    fil.append("C:/projects/fighting_cats4.wmv");
+//    fil.append("C:/projects/swk.wmv");
+//    fil.append("C:/projects/Daft Punk - Derezzed.mp3");
+//    playlistModel->addToPlaylist(fil);
 //    **************************************************************
 
     ui->lv_playlist->setModel(playlistModel);
@@ -52,6 +54,11 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
     ui->pb_itemDown->setIcon(style()->standardIcon(QStyle::SP_ArrowDown));
     ui->pb_mute->setIcon(style()->standardIcon(QStyle::StandardPixmap::SP_MediaVolume));
 
+    playlistSetVisible(false);
+    ui->videoWidget->hide();
+    ui->l_musicPicture->hide();
+    ui->pb_showHide->hide();
+
 
     connect(ui->videoWidget, &VideoPlayer::fullScreenChanged, this, [this](bool fullScreen)
     {
@@ -65,7 +72,7 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
            return;
 
        player->setMedia(QMediaContent(QUrl::fromLocalFile(fileName)));
-       hidePlaylist();
+       playlistSetVisible(false);
        ui->pb_showHide->hide();
        player->play();
     });
@@ -79,20 +86,17 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
 
        playlistModel->clearPlaylist();
        playlistModel->addToPlaylist(fileNames);
+       player->setPlaylist(playlistModel->playlist());
+       ui->pb_showHide->show();
 
        player->play();
     });
-
-    player = new QMediaPlayer();
 
     player->setNotifyInterval(1);
 
     connect(ui->slider_volume, &QSlider::valueChanged, player, &QMediaPlayer::setVolume);
 
-    connect(ui->pb_mute, &QPushButton::clicked, this, [this]()
-    {
-       muteOrUnmute();
-    });
+    connect(ui->pb_mute, &QPushButton::clicked, this, &MainWindow::muteOrUnmute);
 
     connect(ui->a_clear, &QAction::triggered, this, [this, playlistModel](){
        int position = player->position();
@@ -117,64 +121,26 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
             ui->pb_playpause->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     });
 
-    connect(ui->pb_playpause, &QPushButton::clicked, this, [this](){
-        playOrPause();
-    });
+    connect(ui->pb_playpause, &QPushButton::clicked, this, &MainWindow::playOrPause);
 
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Space, Qt::NoModifier, [this]
-    {
-        playOrPause();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_B, Qt::NoModifier, [this]
-    {
-        player->stop();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_F, Qt::ControlModifier, [this]
-    {
-        ui->videoWidget->changeDisplayMode();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Escape, Qt::NoModifier, [this]
-    {
-        ui->videoWidget->exitFullScreen();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Left, Qt::NoModifier, [this]
-    {
-        seekBackward();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Right, Qt::NoModifier, [this]
-    {
-        seekForward();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_M, Qt::ControlModifier, [this]
-    {
-        muteOrUnmute();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Left, Qt::ControlModifier, [this, playlistModel]
-    {
-        playlistModel->previous();
-    });
-    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Right, Qt::ControlModifier, [this, playlistModel]
-    {
-        playlistModel->next();
-    });
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Space, Qt::NoModifier, std::bind(&MainWindow::playOrPause, this));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_B, Qt::NoModifier, std::bind(&QMediaPlayer::stop, player));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_F, Qt::ControlModifier, std::bind(&VideoPlayer::switchFullScreen, ui->videoWidget));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Escape, Qt::NoModifier, std::bind(&VideoPlayer::exitFullScreen, ui->videoWidget));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Left, Qt::NoModifier, std::bind(&MainWindow::seekBackward, this));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Right, Qt::NoModifier, std::bind(&MainWindow::seekForward, this));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_M, Qt::ControlModifier, std::bind(&MainWindow::muteOrUnmute, this));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Left, Qt::ControlModifier, std::bind(&PlaylistModel::previous, playlistModel));
+    KeyObserver::instance().registerKeyEventCallback(Qt::Key_Right, Qt::ControlModifier, std::bind(&PlaylistModel::next, playlistModel));
 
-
-    connect(ui->pb_stop, &QPushButton::clicked, this, [this](){
-        player->stop();
-    });
+    connect(ui->pb_stop, &QPushButton::clicked, player, &QMediaPlayer::stop);
 
     connect(ui->pb_previous, &QPushButton::clicked, playlistModel, &PlaylistModel::previous);
     connect(ui->pb_next, &QPushButton::clicked, playlistModel, &PlaylistModel::next);
 
-    connect(ui->pb_seekBackward, &QPushButton::clicked, this, [this]()
-    {
-       seekBackward();
-    });
+    connect(ui->pb_seekBackward, &QPushButton::clicked, this, &MainWindow::seekBackward);
 
-    connect(ui->pb_seekForward, &QPushButton::clicked, this, [this]()
-    {
-       seekForward();
-    });
+    connect(ui->pb_seekForward, &QPushButton::clicked, this, &MainWindow::seekForward);
 
     connect(ui->pb_itemUp, &QPushButton::clicked, this, &MainWindow::moveUp);
     connect(ui->pb_itemDown, &QPushButton::clicked, this, &MainWindow::moveDown);
@@ -196,38 +162,50 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
 
 
 
-    connect(player, &QMediaPlayer::videoAvailableChanged, this, [this](bool videoAvailable)
+    connect(player, &QMediaPlayer::mediaChanged, this, [this]()
     {
-       if (videoAvailable)
-       {
-           hidePlaylist();
-           ui->l_musicPicture->hide();
-           ui->videoWidget->show();
-       }
-       else if (player->isAudioAvailable())
-       {
-           showPlaylist();
-           ui->l_musicPicture->show();
-           ui->videoWidget->hide();
-       }
-       else
-       {
-           showPlaylist();
-           ui->l_musicPicture->hide();
-           ui->videoWidget->hide();
-       }
+//        playlistSetVisible(!(player->playlist() == nullptr || player->isVideoAvailable()));
+
+//        ui->videoWidget->setVisible(player->isVideoAvailable());
+//        qDebug() << !player->isVideoAvailable();
+//        qDebug() << player->isAudioAvailable();
+//        qDebug() << ((!player->isVideoAvailable()) && player->isAudioAvailable());
+//        ui->l_musicPicture->setVisible(((!player->isVideoAvailable()) && player->isAudioAvailable()));
+//        if (player->playlist() == nullptr)
+//        {
+//            playlistSetVisible(false);
+//        }
+//        else if (videoAvailable)
+//        {
+//            playlistSetVisible(false);
+//            ui->l_musicPicture->hide();
+//            ui->videoWidget->show();
+//        }
+//        else if (player->isAudioAvailable())
+//        {
+//            playlistSetVisible(true);
+//            ui->l_musicPicture->show();
+//            ui->videoWidget->hide();
+//        }
+//        else
+//        {
+//            playlistSetVisible(true);
+//            ui->l_musicPicture->hide();
+//            //           ui->videoWidget->hide();
+//        }
 
     });
 
-    connect(player, &QMediaPlayer::currentMediaChanged, this, [this](){
-        ui->videoWidget->update();
-   });
+//    connect(player, &QMediaPlayer::currentMediaChanged, this, [this](){
+//        ui->videoWidget->update();
+//   });
 
     connect(player, &QMediaPlayer::durationChanged, this, [this](){
        if (player->duration() <= 0)
        {
            ui->slider_time->hide();
            ui->l_time->hide();
+           ui->videoWidget->setVisible(true);
        }
        else
        {
@@ -235,8 +213,12 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
            fullTime = msecsToQTime(player->duration());
            ui->slider_time->show();
            ui->l_time->show();
+           ui->videoWidget->setVisible(player->isVideoAvailable());
        }
+       ui->l_musicPicture->setVisible(((!player->isVideoAvailable()) && player->isAudioAvailable()));
+       playlistSetVisible(!(player->playlist() == nullptr || player->isVideoAvailable()));
     });
+
 
     connect(player, &QMediaPlayer::positionChanged, ui->slider_time, &QSlider::setValue);
 
@@ -260,7 +242,7 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
 
     connect(ui->pb_showHide, &QPushButton::clicked, this, &MainWindow::showOrHidePlaylist);
 
-    connect(ui->pb_add, &QPushButton::clicked, this, [playlistModel]()
+    connect(ui->pb_add, &QPushButton::clicked, this, [this, playlistModel]()
     {
        QStringList fileNames = QFileDialog ::getOpenFileNames();
 
@@ -272,13 +254,14 @@ MainWindow::MainWindow(const QString startFilePath, QWidget *parent) :
         playlistModel->setByIndex(index);
         player->play();
     });
-
+    qDebug() << playlistModel->mediaCount();
     if (!startFilePath.isEmpty())
         player->setMedia(QMediaContent(QUrl::fromLocalFile(startFilePath)));
+    else if (playlistModel->mediaCount() > 0)
+        player->setPlaylist(playlistModel->playlist());
 
     player->setVideoOutput(ui->videoWidget);
 
-    player->setPlaylist(playlistModel->playlist());
     player->play();
 }
 
@@ -315,27 +298,21 @@ void MainWindow::muteOrUnmute()
     player->setMuted(!player->isMuted());
 }
 
-void MainWindow::hidePlaylist()
+void MainWindow::playlistSetVisible(bool visible)
 {
     if (!blockHiding)
     {
-        ui->lv_playlist->hide();
-        ui->pb_add->hide();
-        ui->pb_itemUp->hide();
-        ui->pb_itemDown->hide();
-        ui->pb_showHide->setText("<<");
+        ui->lv_playlist->setVisible(visible);
+        ui->pb_add->setVisible(visible);
+        ui->pb_itemUp->setVisible(visible);
+        ui->pb_itemDown->setVisible(visible);
+        if (visible)
+            ui->pb_showHide->setText(">>");
+        else
+            ui->pb_showHide->setText("<<");
     }
     else
         blockHiding = false;
-}
-
-void MainWindow::showPlaylist()
-{
-    ui->lv_playlist->show();
-    ui->pb_add->show();
-    ui->pb_itemUp->show();
-    ui->pb_itemDown->show();
-    ui->pb_showHide->setText(">>");
 }
 
 QTime MainWindow::msecsToQTime(int msecs)
@@ -351,10 +328,7 @@ QTime MainWindow::msecsToQTime(int msecs)
 
 void MainWindow::showOrHidePlaylist()
 {
-    if (ui->lv_playlist->isVisible())
-        hidePlaylist();
-    else
-        showPlaylist();
+    playlistSetVisible(!ui->lv_playlist->isVisible());
 }
 
 void MainWindow::moveUp()

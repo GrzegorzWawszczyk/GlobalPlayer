@@ -134,6 +134,11 @@ void PlaylistModel::moveDown(int index)
     emit moved(index + 1);
 }
 
+int PlaylistModel::mediaCount()
+{
+    return files.mediaCount();
+}
+
 void PlaylistModel::previous()
 {
     if (files.currentIndex() == 0)

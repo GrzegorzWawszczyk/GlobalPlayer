@@ -12,7 +12,7 @@ class VideoPlayer : public QVideoWidget
 public:
     VideoPlayer(QWidget* parent = 0);
 
-    void changeDisplayMode();
+    void switchFullScreen();
     void exitFullScreen();
 
     void playOrPause();

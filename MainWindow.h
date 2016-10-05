@@ -17,13 +17,12 @@ public:
     explicit MainWindow(const QString startFilePath = QString(), QWidget *parent = 0);
     ~MainWindow();
 
+
+public slots:
     void playOrPause();
-    void skipBackward();
-    void skipForward();
     void seekBackward();
     void seekForward();
     void muteOrUnmute();
-
 
 private slots:
     void showOrHidePlaylist();
@@ -31,8 +30,7 @@ private slots:
     void moveUp();
     void moveDown();
 
-    void hidePlaylist();
-    void showPlaylist();
+    void playlistSetVisible(bool visible);
 
 private:
     Ui::MainWindow *ui;
